@@ -1,0 +1,43 @@
+.custom-container {
+    margin-top: 9rem;
+
+
+}
+
+.login-box {
+    border: 1px solid #bce6fe;
+    border-radius: 15px;
+    padding: 2rem;
+    background-color: #9dd8f1;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    /* Mobilde tam genişlik */
+    max-width: 500px;
+    /* Daha büyüklerde sabit genişlik */
+    margin: 0 auto;
+    /* Ortala */
+}
+
+/* Mobilde padding azalt */
+@media (max-width: 426px) {
+    .login-box {
+        padding: 1rem;
+    }
+}
+
+
+.short-input {
+    width: 80%;
+    /* veya 60%, 300px, 20rem */
+    margin: 0 auto;
+    /* ortalamak için */
+}
+
+/* Sayfanın tamamı için dış zemin */
+.outer-container {
+    background-color: #eefbff;
+    /* Açık gri arka plan */
+    min-height: 100vh;
+    /* Ekran yüksekliğini kapla */
+    padding: 2rem;
+}
