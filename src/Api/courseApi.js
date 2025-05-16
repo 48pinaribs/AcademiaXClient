@@ -14,6 +14,7 @@ const courseApi = createApi({
 
         getCourseById: builder.query({
             query: (courseId) => `${courseId}`,
+            providesTags: (result, error, id) => [{ type: 'Course', id }]
         }),
 
         createCourse: builder.mutation({
@@ -31,7 +32,9 @@ const courseApi = createApi({
                 method: "PUT",
                 body: courseData,
             }),
-            invalidatesTags: ["Course"],
+            invalidatesTags: (result, error, arg) => [
+                { type: 'Course', id: arg.courseId }
+            ]
         }),
 
         deleteCourse: builder.mutation({

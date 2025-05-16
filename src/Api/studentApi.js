@@ -7,6 +7,14 @@ const studentApi = createApi({
     }),
     tagTypes: ["Student"],
     endpoints: (builder) => ({
+        getAllStudents: builder.query({
+            query: () => `all`, // Tüm öğrencileri getirir
+            providesTags: ["Student"],
+        }),
+        getStudentById: builder.query({
+            query: (studentId) => `get/${studentId}`, // Öğrenci ID'sine göre öğrenci bilgilerini getirir
+            providesTags: ["Student"],
+        }),
         getStudentProfile: builder.query({
             query: (userId) => `profile/${userId}`,
         }),
@@ -52,6 +60,8 @@ const studentApi = createApi({
 });
 
 export const {
+    useGetAllStudentsQuery,
+    useGetStudentByIdQuery,
     useGetStudentProfileQuery,
     useGetStudentCoursesQuery,
     useGetStudentGradesQuery,

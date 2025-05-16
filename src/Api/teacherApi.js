@@ -7,6 +7,14 @@ const teacherApi = createApi({
     }),
     tagTypes: ["Teacher"],
     endpoints: (builder) => ({
+        getAllTeachers: builder.query({
+            query: () => `all`, // Tüm teacher'leri getirir
+            providesTags: ["Teacher"],
+        }),
+        getTeacherById: builder.query({
+            query: (teacherId) => `get/${teacherId}`, // Teacher ID'sine göre teacher bilgilerini getirir
+            providesTags: ["Teacher"],
+        }),
         getTeacherProfile: builder.query({
             query: (id) => `profile/${id}`,
         }),
@@ -36,6 +44,8 @@ const teacherApi = createApi({
 });
 
 export const {
+    useGetAllTeachersQuery,
+    useGetTeacherByIdQuery,
     useGetTeacherProfileQuery,
     useGetTeacherCoursesQuery,
     useUpdateTeacherProfileMutation,

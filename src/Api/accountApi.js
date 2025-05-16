@@ -1,11 +1,11 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const authApi = createApi({
-    reducerPath: "authApi",
+const accountApi = createApi({
+    reducerPath: "accountApi",
     baseQuery: fetchBaseQuery({
         baseUrl: "https://localhost:7111/api/User/",
     }),
-    tagTypes: ["Auth"],
+    tagTypes: ["Account"],
     endpoints: (builder) => ({
         registerUser: builder.mutation({
             query: (registerData) => ({
@@ -22,12 +22,24 @@ const authApi = createApi({
                 body: loginData,
             }),
         }),
+
+        getUserById: builder.query({
+            query: (id) => `${id}`,
+            providesTags: ['Account'],
+        }),
+
+        getUserType: builder.query({
+            query: (id) => `GetUserType/${id}`
+        }),
+
     }),
 });
 
 export const {
     useRegisterUserMutation,
     useLoginUserMutation,
-} = authApi;
+    useGetUserByIdQuery,
+    useGetUserTypeQuery,
+} = accountApi;
 
-export default authApi;
+export default accountApi;
