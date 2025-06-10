@@ -70,6 +70,13 @@ const courseApi = createApi({
         getAvailableCourses: builder.query({
             query: (userId) => `available/${userId}`,
         }),
+
+        getStudentsByCourse: builder.query({
+            query: (courseId) => `${courseId}/students`,
+            transformResponse: (response) => response.result, // ← eğer response.result dönüyorsa!
+        }),
+
+
     }),
 });
 
@@ -83,6 +90,7 @@ export const {
     useUnenrollCourseMutation,
     useGetEnrolledCoursesQuery,
     useGetAvailableCoursesQuery,
+    useGetStudentsByCourseQuery
 } = courseApi;
 
 export default courseApi;

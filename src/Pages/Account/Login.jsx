@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import './Styles/Login.css';
-import { useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom";
+import ToastrNotify from '../../Helper/ToastrNotify';
+import { useDispatch } from 'react-redux';
+import { setLoggedInUser } from '../../Storage/Redux/authSlice';
 
 const Login = () => {
 
+    const dispatch = useDispatch();
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
@@ -35,11 +39,21 @@ const Login = () => {
             const data = await response.json();
 
             if (response.ok) {
-                localStorage.setItem('token', data.access_token);
-                navigate("/StudentDashboard");
+                const token = data.result.token;
+                const user = data.result.user;
+
+                localStorage.setItem('token', token);
+                localStorage.setItem('user', JSON.stringify(user));
+                // localStorage.setItem('token', data.result.token);
+
+                // ✅ Redux store'a token ve user bilgilerini kaydet
+                dispatch(setLoggedInUser({ token, user }));
+
+                navigate("/profilepage");
+                console.log(data);
                 ToastrNotify("You are successfully logged in", "success");
                 setSuccess('Giriş başarılı!');
-                // window.location.href = '/dashboard'; // yönlendirme yapılabilir
+
             } else {
                 setError(data.message || 'Giriş başarısız');
             }

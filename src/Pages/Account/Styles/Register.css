@@ -5,11 +5,8 @@
 }
 
 .login-box {
-    border: 1px solid #bce6fe;
-    border-radius: 15px;
     padding: 2rem;
-    background-color: #9dd8f1;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
     width: 100%;
     /* Mobilde tam genişlik */
     max-width: 500px;
@@ -41,7 +38,7 @@
 
 /* Sayfanın tamamı için dış zemin */
 .outer-container {
-    background-color: #eefbff;
+    background-color: #ffffff;
     /* Açık gri arka plan */
     min-height: 100vh;
     /* Ekran yüksekliğini kapla */

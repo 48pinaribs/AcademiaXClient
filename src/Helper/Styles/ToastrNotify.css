@@ -1,0 +1,16 @@
+/* Tüm toast kutuları için temel stil */
+.custom-toast-container {
+    font-size: 1rem;
+    max-width: 300px;
+    word-break: break-word;
+    box-sizing: border-box;
+}
+
+/* Mobil cihazlarda ekran genişliğine göre küçült */
+@media (max-width: 600px) {
+    .custom-toast-container {
+        max-width: 70vw;
+        font-size: 0.875rem;
+        padding: 12px 16px;
+    }
+}

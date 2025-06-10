@@ -31,7 +31,6 @@ const accountApi = createApi({
         getUserType: builder.query({
             query: (id) => `GetUserType/${id}`
         }),
-
     }),
 });
 
