@@ -15,8 +15,13 @@ const gtfsApi = createApi({
         getTimetable: builder.query({
             query: ({ stopId, directionId = 0 }) => `timetable?stopId=${stopId}&directionId=${directionId}`,
         }),
+
+        // "A'dan B'ye nasıl giderim" rota planlayıcısı — bkz. GtfsService.GetRoutePlan.
+        getRoutePlan: builder.query({
+            query: ({ fromStopId, toStopId }) => `plan?fromStopId=${fromStopId}&toStopId=${toStopId}`,
+        }),
     }),
 });
 
-export const { useGetStopsQuery, useGetTimetableQuery } = gtfsApi;
+export const { useGetStopsQuery, useGetTimetableQuery, useLazyGetRoutePlanQuery } = gtfsApi;
 export default gtfsApi;

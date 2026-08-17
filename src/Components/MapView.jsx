@@ -5,6 +5,10 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { LoadingState } from "./UI/States";
 import { distanceMeters } from "../Helper/gtfsTime";
+import { useAuth } from "../Hooks/useAuth";
+import { useGetStudentProfileQuery, useSetFavoriteStopMutation } from "../Api/studentApi";
+import { useLazyGetRoutePlanQuery } from "../Api/gtfsApi";
+import ToastrNotify from "../Helper/ToastrNotify";
 import "../styles/theme.css";
 
 // Yurt ve kampüs kapısı, kampüs haritasında diğer duraklardan (kütüphane, fakülte, şehir
@@ -33,6 +37,8 @@ const ICONS = {
     DEFAULT: pinIcon("📍", "#5B6B7A"),
 };
 
+const FAVORITE_ICON = pinIcon("⭐", "#D9A441");
+
 const DIRECTIONS = [
     { id: 0, label: "Gidiş", hint: "Yurt → Şehir Merkezi" },
     { id: 1, label: "Dönüş", hint: "Şehir Merkezi → Yurt" },
@@ -55,6 +61,30 @@ const MapView = () => {
     const [nearestStop, setNearestStop] = useState(null);
     const [locating, setLocating] = useState(false);
     const [locateError, setLocateError] = useState('');
+
+    // Favori durak — bkz. StudentService.SetFavoriteStop.
+    const { userId } = useAuth();
+    const { data: profileData } = useGetStudentProfileQuery(userId, { skip: !userId });
+    const [setFavoriteStop, { isLoading: isSavingFavorite }] = useSetFavoriteStopMutation();
+    const favoriteStopId = profileData?.result?.favoriteStopId;
+
+    // Rota planlayıcı — bkz. GtfsService.GetRoutePlan.
+    const [fromStopId, setFromStopId] = useState('');
+    const [toStopId, setToStopId] = useState('');
+    const [triggerPlan, { data: planData, isFetching: isPlanning, error: planError }] = useLazyGetRoutePlanQuery();
+
+    const handleToggleFavorite = (stopId) => {
+        const nextValue = favoriteStopId === stopId ? null : stopId;
+        setFavoriteStop({ studentId: userId, stopId: nextValue })
+            .unwrap()
+            .then(() => ToastrNotify(nextValue ? 'Favori durak olarak ayarlandı.' : 'Favori durak kaldırıldı.', 'success'))
+            .catch(() => ToastrNotify('Favori durak güncellenirken bir hata oluştu.', 'error'));
+    };
+
+    const handlePlanRoute = () => {
+        if (!fromStopId || !toStopId) return;
+        triggerPlan({ fromStopId, toStopId });
+    };
 
     useEffect(() => {
         axiosClient.get("/Gtfs/stops")
@@ -129,6 +159,61 @@ const MapView = () => {
                 </div>
             )}
 
+            <div className="ax-card" style={{ marginBottom: 'var(--space-3)' }}>
+                <div className="ax-card-head"><h3>🧭 Rota Planlayıcı</h3></div>
+                <div className="ax-card-body" style={{ paddingTop: 0 }}>
+                    <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                        <div className="ax-field" style={{ flex: 1, minWidth: 180 }}>
+                            <label htmlFor="fromStop">Nereden</label>
+                            <select id="fromStop" value={fromStopId} onChange={(e) => setFromStopId(e.target.value)}>
+                                <option value="">Durak seçin…</option>
+                                {stops.map((s) => (
+                                    <option key={s.stopId} value={s.stopId}>{s.stopName}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="ax-field" style={{ flex: 1, minWidth: 180 }}>
+                            <label htmlFor="toStop">Nereye</label>
+                            <select id="toStop" value={toStopId} onChange={(e) => setToStopId(e.target.value)}>
+                                <option value="">Durak seçin…</option>
+                                {stops.map((s) => (
+                                    <option key={s.stopId} value={s.stopId}>{s.stopName}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <button className="ax-btn ax-btn-primary" onClick={handlePlanRoute} disabled={!fromStopId || !toStopId || isPlanning}>
+                            {isPlanning ? 'Aranıyor…' : 'Rotayı Bul'}
+                        </button>
+                    </div>
+
+                    {planError && (
+                        <div className="ax-error" style={{ marginTop: 'var(--space-3)' }}>
+                            {planError?.data?.errorMessages?.[0] || 'Bu duraklar arasında bir güzergah bulunamadı.'}
+                        </div>
+                    )}
+
+                    {planData?.result && (
+                        <div style={{ marginTop: 'var(--space-3)', border: '1px solid var(--purple)', background: 'var(--purple-tint)', borderRadius: 'var(--radius-md)', padding: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+                            <div style={{ flex: 1, minWidth: 200 }}>
+                                <div style={{ fontSize: 12, color: 'var(--purple-strong)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                    {planData.result.fromStopName} → {planData.result.toStopName}
+                                </div>
+                                <div style={{ fontSize: 'var(--text-lg)', fontFamily: 'var(--font-display)', marginTop: 2 }} className="tabular">
+                                    {planData.result.departureTime.slice(0, 5)} kalkış · {planData.result.arrivalTime.slice(0, 5)} varış · {planData.result.durationMinutes} dk
+                                </div>
+                                <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>
+                                    {planData.result.isNextDay
+                                        ? 'Bugün için sefer kalmadı — bu, yarının ilk seferi.'
+                                        : planData.result.waitMinutes <= 1
+                                            ? 'Kalkışa az kaldı'
+                                            : `Kalkışa ${planData.result.waitMinutes} dakika var`}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {loadingStops ? (
                 <LoadingState text="Kampüs haritası yükleniyor…" />
             ) : (
@@ -138,7 +223,7 @@ const MapView = () => {
                         <Marker
                             key={stop.stopId}
                             position={[stop.stopLat, stop.stopLon]}
-                            icon={ICONS[stop.stopId] || ICONS.DEFAULT}
+                            icon={stop.stopId === favoriteStopId ? FAVORITE_ICON : (ICONS[stop.stopId] || ICONS.DEFAULT)}
                             eventHandlers={{ click: () => setSelectedStop(stop) }}
                         >
                             <Popup>{stop.stopName}</Popup>
@@ -156,7 +241,15 @@ const MapView = () => {
                 <div className="ax-card" style={{ marginTop: 'var(--space-5)' }}>
                     <div className="ax-card-head">
                         <h3>{selectedStop.stopName} — Dolmuş Saatleri</h3>
-                        <div style={{ display: 'inline-flex', gap: 6 }}>
+                        <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                            <button
+                                className="ax-btn ax-btn-ghost"
+                                onClick={() => handleToggleFavorite(selectedStop.stopId)}
+                                disabled={isSavingFavorite || !userId}
+                                title={favoriteStopId === selectedStop.stopId ? 'Favorilerden kaldır' : 'Favori durak yap'}
+                            >
+                                {favoriteStopId === selectedStop.stopId ? '⭐ Favori' : '☆ Favori Yap'}
+                            </button>
                             {DIRECTIONS.map((d) => (
                                 <button
                                     key={d.id}

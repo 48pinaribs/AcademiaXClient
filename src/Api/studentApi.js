@@ -67,6 +67,16 @@ const studentApi = createApi({
             }),
             invalidatesTags: ["Student"],
         }),
+
+        // Öğrencinin kampüs ring'indeki favori durağını ayarlar/kaldırır.
+        setFavoriteStop: builder.mutation({
+            query: (data) => ({
+                url: "favorite-stop",
+                method: "PUT",
+                body: data,
+            }),
+            invalidatesTags: ["Student"],
+        }),
     }),
 });
 
@@ -81,6 +91,7 @@ export const {
     useGetStudentAttendanceQuery,
     useSendStudentMessageMutation,
     useAssignAdvisorMutation,
+    useSetFavoriteStopMutation,
 } = studentApi;
 
 export default studentApi;
