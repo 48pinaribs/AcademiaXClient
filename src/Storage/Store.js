@@ -8,6 +8,7 @@ import courseApi from "../Api/courseApi";
 import studentApi from "../Api/studentApi";
 import teacherApi from "../Api/teacherApi";
 import accountApi from "../Api/accountApi";
+import gtfsApi from "../Api/gtfsApi";
 
 const store = configureStore({
     reducer: {
@@ -19,6 +20,7 @@ const store = configureStore({
         [studentApi.reducerPath]: studentApi.reducer,
         [teacherApi.reducerPath]: teacherApi.reducer,
         [accountApi.reducerPath]: accountApi.reducer,
+        [gtfsApi.reducerPath]: gtfsApi.reducer,
     },
 
     middleware: (getDefaultMiddleware) =>
@@ -26,7 +28,8 @@ const store = configureStore({
             courseApi.middleware,
             studentApi.middleware,
             teacherApi.middleware,
-            accountApi.middleware
+            accountApi.middleware,
+            gtfsApi.middleware
         ),
 });
 

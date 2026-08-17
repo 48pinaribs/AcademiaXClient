@@ -1,82 +1,69 @@
 import React from 'react';
-import { CaretRightOutlined } from '@ant-design/icons';
-import {
-    Collapse,
-    Button,
-    Popconfirm,
-    message,
-    theme,
-    Typography,
-} from 'antd';
 import {
     useGetEnrolledCoursesQuery,
-    useUnenrollCourseMutation, // isteğe bağlı
+    useUnenrollCourseMutation,
 } from '../Api/courseApi';
-import { jwtDecode } from 'jwt-decode';
-
-const { Title } = Typography;
+import { useAuth } from '../Hooks/useAuth';
+import ToastrNotify from '../Helper/ToastrNotify';
+import { LoadingState, ErrorState, EmptyState } from './UI/States';
+import '../styles/theme.css';
 
 const EnrolledCourse = () => {
+    const { userId } = useAuth();
+    const { data, isLoading, error } = useGetEnrolledCoursesQuery(userId, { skip: !userId });
+    const [unenrollCourse, { isLoading: isUnenrolling }] = useUnenrollCourseMutation();
 
-    const token = localStorage.getItem("token");
-    const decoded = jwtDecode(token);
-    const userId = decoded?.nameid;
-
-    const { data: courses = [], isLoading } = useGetEnrolledCoursesQuery(userId);
-    console.log('Enrolled courses:', courses);
-    const [unenrollCourse] = useUnenrollCourseMutation();
-
-    const panelStyle = {
-        marginBottom: 16,
-        background: token.colorFillAlter,
-        borderRadius: token.borderRadiusLG,
-        border: 'none',
-    };
+    const courses = data?.result || [];
 
     const handleUnenroll = async (courseId) => {
+        if (!window.confirm('Bu dersten ayrılmak istediğine emin misin?')) return;
         try {
-            await unenrollCourse(courseId).unwrap();
-            message.success("You've successfully unenrolled from the course.");
-        } catch (error) {
-            message.error('Failed to unenroll.');
+            // Backend UnenrollFromCourseRequestDTO hem StudentId hem CourseId bekliyor.
+            await unenrollCourse({ studentId: userId, courseId }).unwrap();
+            ToastrNotify('Dersten ayrıldın.', 'success');
+        } catch (err) {
+            ToastrNotify('Ayrılma işlemi başarısız oldu.', 'error');
         }
     };
 
-    const getItems = () =>
-        courses?.result?.map((course, index) => ({
-            key: index.toString(),
-            label: `${course.code} - ${course.name}`,
-            children: (
-                <div>
-                    <p><strong>Description:</strong> {course.description}</p>
-                    <p><strong>Credits:</strong> {course.credit}</p>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                        <Popconfirm
-                            title="Are you sure you want to unenroll from this course?"
-                            onConfirm={() => handleUnenroll(course.id)}
-                            okText="Yes"
-                            cancelText="No"
-                        >
-                            <Button danger>Unenroll</Button>
-                        </Popconfirm>
-                    </div>
-                </div>
-            ),
-            style: panelStyle,
-        }));
-
     return (
-        <div style={{ maxWidth: 800, margin: '40px auto' }}>
-            <Title level={3}>My Enrolled Courses</Title>
-            <Collapse
-                bordered={false}
-                expandIcon={({ isActive }) => (
-                    <CaretRightOutlined rotate={isActive ? 90 : 0} />
-                )}
-                style={{ background: token.colorBgContainer }}
-                items={getItems()}
-                loading={isLoading.toString()}
-            />
+        <div>
+            <div className="ax-page-top">
+                <div><h1>Derslerim</h1><div className="meta">{courses.length} kayıtlı ders</div></div>
+            </div>
+
+            {isLoading && <LoadingState />}
+            {!isLoading && error && <ErrorState text="Dersler yüklenemedi." />}
+
+            {!isLoading && !error && (
+                courses.length === 0 ? (
+                    <div className="ax-card"><EmptyState icon="📚" title="Henüz kayıtlı dersin yok" subtitle="Ders Seç sayfasından derse kayıt olabilirsin." /></div>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                        {courses.map((course) => (
+                            <div key={course.courseId} className="ax-card" style={{ padding: 'var(--space-4)' }}>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+                                    <div>
+                                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--purple-strong)', fontWeight: 700 }}>{course.code}</div>
+                                        <div style={{ fontWeight: 600, fontSize: 'var(--text-base)' }}>{course.name}</div>
+                                        {course.description && <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 4, maxWidth: '55ch' }}>{course.description}</div>}
+                                        <div style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 4 }}>{course.credits} kredi</div>
+                                    </div>
+                                    <div style={{ flex: 1 }} />
+                                    <button
+                                        className="ax-btn ax-btn-ghost"
+                                        disabled={isUnenrolling}
+                                        onClick={() => handleUnenroll(course.courseId)}
+                                        style={{ color: 'var(--brick)', borderColor: 'var(--brick-tint)' }}
+                                    >
+                                        Bırak
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )
+            )}
         </div>
     );
 };

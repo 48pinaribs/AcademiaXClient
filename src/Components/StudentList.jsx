@@ -1,51 +1,58 @@
 import React from 'react';
-import { List, Avatar, Skeleton } from 'antd';
-import { useGetAllStudentsQuery } from '../Api/studentApi';
 import { useNavigate } from 'react-router-dom';
+import { useGetAllStudentsQuery } from '../Api/studentApi';
+import { LoadingState, ErrorState, EmptyState } from './UI/States';
+import '../styles/theme.css';
+
+const initials = (fullName) => {
+    const parts = (fullName || '').trim().split(/\s+/);
+    return ((parts[0]?.[0] || '?') + (parts[1]?.[0] || '')).toUpperCase();
+};
 
 const StudentList = ({ searchTerm }) => {
-    const { data: students = [], isLoading, error } = useGetAllStudentsQuery();
+    const { data, isLoading, error } = useGetAllStudentsQuery();
     const navigate = useNavigate();
 
-    if (isLoading) {
-        return <div>Yükleniyor...</div>;
-    }
+    const students = data?.result || [];
 
-    if (error) {
-        return <div>Hata oluştu: {error.message || 'Bilinmeyen hata'}</div>;
-    }
+    if (isLoading) return <LoadingState />;
+    if (error) return <ErrorState />;
+    if (!students.length) return <EmptyState icon="🎓" title="Kayıtlı öğrenci bulunamadı" />;
 
-    const filteredStudents = searchTerm
-        ? students.result.filter(student =>
-            student.id.toString().includes(searchTerm.trim()) ||
-            student.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            student.email.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = searchTerm
+        ? students.filter((s) =>
+            s.id.toString().includes(searchTerm.trim()) ||
+            s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            s.email.toLowerCase().includes(searchTerm.toLowerCase())
         )
-        : students.result;
+        : students;
 
     return (
-        <List
-            className="student-list"
-            itemLayout="horizontal"
-            dataSource={filteredStudents}
-            renderItem={(item) => (
-                <List.Item
-                    actions={[
-                        <a key="details" onClick={() => navigate(`/userdetail/${item.id}`)}>Detay</a>,
-                    ]}
-                >
-                    <Skeleton avatar title={false} loading={false} active>
-                        <List.Item.Meta
-                            avatar={<Avatar src={`/images/students/${item.image}`} />}
-                            title={item.fullName}
-                            description={
-                                <div><strong>Email:</strong> {item.email}</div>
-                            }
-                        />
-                    </Skeleton>
-                </List.Item>
-            )}
-        />
+        <div className="ax-card">
+            <div className="ax-card-body ax-table-wrap">
+                {filtered.length === 0 ? (
+                    <EmptyState icon="🔍" title="Aramanla eşleşen öğrenci yok" />
+                ) : (
+                    <table className="ax-table">
+                        <thead><tr><th>Öğrenci</th><th>E-posta</th><th></th></tr></thead>
+                        <tbody>
+                            {filtered.map((s) => (
+                                <tr key={s.id}>
+                                    <td>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                            <div className="ax-avatar">{initials(s.fullName)}</div>
+                                            {s.fullName}
+                                        </div>
+                                    </td>
+                                    <td>{s.email}</td>
+                                    <td><button className="ax-btn ax-btn-ghost" onClick={() => navigate(`/userdetail/${s.id}`)}>Detay</button></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
+        </div>
     );
 };
 

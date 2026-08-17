@@ -1,58 +1,58 @@
 import React from 'react';
-import { List, Avatar, Skeleton, Button } from 'antd';
-import { useGetAllTeachersQuery } from '../Api/teacherApi'; // kendi path'ine göre düzelt
 import { useNavigate } from 'react-router-dom';
+import { useGetAllTeachersQuery } from '../Api/teacherApi';
+import { LoadingState, ErrorState, EmptyState } from './UI/States';
+import '../styles/theme.css';
+
+const initials = (fullName) => {
+    const parts = (fullName || '').trim().split(/\s+/);
+    return ((parts[0]?.[0] || '?') + (parts[1]?.[0] || '')).toUpperCase();
+};
 
 const TeacherList = ({ searchTerm }) => {
-    const { data: teachers = [], isLoading, error } = useGetAllTeachersQuery();
-    console.log(teachers);
+    const { data, isLoading, error } = useGetAllTeachersQuery();
     const navigate = useNavigate();
 
-    if (isLoading) {
-        return <div>Yükleniyor...</div>;
-    }
+    const teachers = data?.result || [];
 
-    if (error) {
-        return <div>Hata oluştu: {error.message || 'Bilinmeyen hata'}</div>;
-    }
+    if (isLoading) return <LoadingState />;
+    if (error) return <ErrorState />;
+    if (!teachers.length) return <EmptyState icon="👩‍🏫" title="Kayıtlı öğretmen bulunamadı" />;
 
-    // Arama metni ile filtreleme
-    const filteredTeachers = searchTerm
-        ? teachers.result.filter(teacher =>
-            teacher.id.toString().includes(searchTerm.trim()) ||
-            teacher.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            teacher.email.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = searchTerm
+        ? teachers.filter((t) =>
+            t.id.toString().includes(searchTerm.trim()) ||
+            t.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            t.email.toLowerCase().includes(searchTerm.toLowerCase())
         )
-        : teachers.result;
-
+        : teachers;
 
     return (
-        <List
-            className="teacher-list"
-            loading={isLoading}
-            itemLayout="horizontal"
-            dataSource={filteredTeachers}
-            renderItem={(item) => (
-                <List.Item
-                    actions={[
-                        // <a key="edit" onClick={() => alert(`Düzenle: ${item.fullName}`)}>Düzenle</a>,
-                        <a key="details" onClick={() => navigate(`/userdetail/${item.id}`)}>Detay</a>,
-                    ]}
-                >
-                    <Skeleton avatar title={false} loading={false} active>
-                        <List.Item.Meta
-                            avatar={<Avatar src={`/images/students/${item.image}`} />}
-                            title={item.fullName}
-                            description={
-                                <>
-                                    <div><strong>Email:</strong> {item.email}</div>
-                                </>
-                            }
-                        />
-                    </Skeleton>
-                </List.Item>
-            )}
-        />
+        <div className="ax-card">
+            <div className="ax-card-body ax-table-wrap">
+                {filtered.length === 0 ? (
+                    <EmptyState icon="🔍" title="Aramanla eşleşen öğretmen yok" />
+                ) : (
+                    <table className="ax-table">
+                        <thead><tr><th>Öğretmen</th><th>E-posta</th><th></th></tr></thead>
+                        <tbody>
+                            {filtered.map((t) => (
+                                <tr key={t.id}>
+                                    <td>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                            <div className="ax-avatar">{initials(t.fullName)}</div>
+                                            {t.fullName}
+                                        </div>
+                                    </td>
+                                    <td>{t.email}</td>
+                                    <td><button className="ax-btn ax-btn-ghost" onClick={() => navigate(`/userdetail/${t.id}`)}>Detay</button></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
+        </div>
     );
 };
 

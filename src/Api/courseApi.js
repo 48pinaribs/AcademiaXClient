@@ -1,10 +1,9 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { createAuthorizedBaseQuery } from "./apiConfig";
 
 const courseApi = createApi({
     reducerPath: "courseApi",
-    baseQuery: fetchBaseQuery({
-        baseUrl: "https://localhost:7111/api/course/",
-    }),
+    baseQuery: createAuthorizedBaseQuery("course"),
     tagTypes: ["Course"],
     endpoints: (builder) => ({
         getAllCourses: builder.query({

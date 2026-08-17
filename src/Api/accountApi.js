@@ -1,10 +1,9 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { createAuthorizedBaseQuery } from "./apiConfig";
 
 const accountApi = createApi({
     reducerPath: "accountApi",
-    baseQuery: fetchBaseQuery({
-        baseUrl: "https://localhost:7111/api/User/",
-    }),
+    baseQuery: createAuthorizedBaseQuery("User"),
     tagTypes: ["Account"],
     endpoints: (builder) => ({
         registerUser: builder.mutation({
@@ -23,9 +22,28 @@ const accountApi = createApi({
             }),
         }),
 
+        // Sadece Administrator çağırabilir — backend UserController.CreateStaffUser
+        // [Authorize(Roles = "Administrator")] ile korunuyor.
+        createStaffUser: builder.mutation({
+            query: (staffData) => ({
+                url: "CreateStaffUser",
+                method: "POST",
+                body: staffData,
+            }),
+        }),
+
         getUserById: builder.query({
             query: (id) => `${id}`,
             providesTags: ['Account'],
+        }),
+
+        updateProfile: builder.mutation({
+            query: (profileData) => ({
+                url: "update-profile",
+                method: "PUT",
+                body: profileData,
+            }),
+            invalidatesTags: ['Account'],
         }),
 
         getUserType: builder.query({
@@ -37,8 +55,10 @@ const accountApi = createApi({
 export const {
     useRegisterUserMutation,
     useLoginUserMutation,
+    useCreateStaffUserMutation,
     useGetUserByIdQuery,
     useGetUserTypeQuery,
+    useUpdateProfileMutation,
 } = accountApi;
 
 export default accountApi;

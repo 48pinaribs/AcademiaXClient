@@ -1,51 +1,45 @@
 import React from 'react';
 import { useGetTeacherCoursesQuery } from '../Api/teacherApi';
-import {
-    Card,
-    Typography,
-    Row,
-    Col,
-    Spin,
-    Alert,
-    Button,
-} from 'antd';
 import { useNavigate } from 'react-router-dom';
-
-const { Title, Text } = Typography;
+import { useAuth } from '../Hooks/useAuth';
+import { LoadingState, ErrorState, EmptyState } from './UI/States';
+import '../styles/theme.css';
 
 const TeacherCourse = () => {
     const navigate = useNavigate();
-    const token = localStorage.getItem('token');
-    const decoded = JSON.parse(atob(token.split('.')[1]));
-    const teacherId = decoded.nameid;
+    const { userId: teacherId } = useAuth();
 
-    const { data: courses, error, isLoading } = useGetTeacherCoursesQuery(teacherId);
-
-    if (isLoading) return <Spin />;
-    if (error) return <Alert message="Hata" description="Veri getirilemedi." type="error" />;
-    if (!courses?.result?.length) return <Alert message="Ders bulunamadı." type="info" />;
+    const { data, error, isLoading } = useGetTeacherCoursesQuery(teacherId, { skip: !teacherId });
+    const courses = data?.result || [];
 
     return (
-        <div style={{ padding: '40px' }}>
-            <Title level={2}>Derslerim</Title>
-            <Row gutter={[24, 24]}>
-                {courses.result.map((course) => (
-                    <Col xs={24} sm={12} md={8} key={course.id}>
-                        <Card
-                            title={course.name}
-                            bordered={false}
-                            hoverable
-                            actions={[
-                                <Button type="link" onClick={() => navigate(`/courses/${course.id}`)}>
-                                    Detay
-                                </Button>,
-                            ]}
-                        >
-                            <Text type="secondary">{course.description || 'Açıklama yok'}</Text>
-                        </Card>
-                    </Col>
-                ))}
-            </Row>
+        <div>
+            <div className="ax-page-top">
+                <div><h1>Derslerim</h1><div className="meta">{courses.length} ders</div></div>
+            </div>
+
+            {isLoading && <LoadingState />}
+            {!isLoading && error && <ErrorState text="Dersler getirilemedi." />}
+
+            {!isLoading && !error && (
+                courses.length === 0 ? (
+                    <div className="ax-card"><EmptyState icon="📚" title="Henüz atanmış dersiniz yok" /></div>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                        {courses.map((course) => (
+                            <div key={course.courseId} className="ax-card" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', padding: 'var(--space-4)' }}>
+                                <div>
+                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--purple-strong)', fontWeight: 700 }}>{course.code}</div>
+                                    <div style={{ fontWeight: 600 }}>{course.name}</div>
+                                    <div style={{ fontSize: 12, color: 'var(--ink-faint)' }}>{course.totalStudents} öğrenci · {course.credits} kredi</div>
+                                </div>
+                                <div style={{ flex: 1 }} />
+                                <button className="ax-btn ax-btn-ghost" onClick={() => navigate(`/courses/${course.courseId}`)}>Detay</button>
+                            </div>
+                        ))}
+                    </div>
+                )
+            )}
         </div>
     );
 };

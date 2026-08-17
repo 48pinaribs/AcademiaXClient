@@ -1,16 +1,20 @@
-import React from 'react'
-import MapView from '../../Components/MapView'
-import { Card, Typography } from 'antd'
-const { Title } = Typography
+import React from 'react';
+import MapView from '../../Components/MapView';
+import '../../styles/theme.css';
 
 const StudentHomePage = () => {
     return (
-        <div style={{ padding: 24, display: "flex", justifyContent: "center" }}>
-            <Card style={{ width: "100%", maxWidth: 1000 }}>
-                <MapView />
-            </Card>
+        <div>
+            <div className="ax-page-top">
+                <div><h1>Kampüs Haritası</h1><div className="meta">Durak zaman çizelgesi ve konum</div></div>
+            </div>
+            <div className="ax-card">
+                <div className="ax-card-body">
+                    <MapView />
+                </div>
+            </div>
         </div>
-    )
-}
+    );
+};
 
-export default StudentHomePage
+export default StudentHomePage;

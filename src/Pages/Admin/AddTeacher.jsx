@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useRegisterUserMutation } from '../../Api/accountApi';
+import { useNavigate } from 'react-router-dom';
+import { useCreateStaffUserMutation } from '../../Api/accountApi';
 import ToastrNotify from '../../Helper/ToastrNotify';
 import '../../styles/theme.css';
 
-const Register = () => {
-    const [registerUser, { isLoading }] = useRegisterUserMutation();
+// Sadece Administrator'ın erişebildiği öğretmen hesabı oluşturma sayfası
+// (bkz. App.js: /admin/addteacher, ProtectedRoute allowedRoles=["Administrator"]).
+// Genel /register sayfası artık her zaman Student rolü verdiği için (bkz. UserService.Register),
+// öğretmen hesabı açmanın tek yolu bu sayfa + backend'deki CreateStaffUser uç noktasıdır.
+const AddTeacher = () => {
     const navigate = useNavigate();
+    const [createStaffUser, { isLoading }] = useCreateStaffUserMutation();
     const [error, setError] = useState('');
 
-    // Not: UserType seçimi kasıtlı olarak yok. Herkese açık kayıt backend tarafında
-    // her zaman Student rolü veriyor (bkz. UserService.Register) — istemciden rol
-    // seçtirmek daha önce herkesin kendini Administrator yapabilmesine izin veriyordu.
     const [formData, setFormData] = useState({
         userName: '',
         password: '',
@@ -19,7 +20,8 @@ const Register = () => {
         image: '',
         firstName: '',
         lastName: '',
-        phoneNumber: ''
+        phoneNumber: '',
+        userType: 'Teacher',
     });
 
     const handleInputChange = (e) => {
@@ -30,28 +32,22 @@ const Register = () => {
         e.preventDefault();
         setError('');
         try {
-            await registerUser(formData).unwrap();
-            ToastrNotify("Kayıt başarılı, giriş yapabilirsiniz", "success");
-            navigate('/');
+            await createStaffUser(formData).unwrap();
+            ToastrNotify('Öğretmen hesabı oluşturuldu', 'success');
+            navigate('/admin/teachers');
         } catch (err) {
             const messages = err?.data?.errorMessages;
-            setError(Array.isArray(messages) && messages.length ? messages.join(' ') : 'Kayıt sırasında bir hata oluştu.');
+            setError(Array.isArray(messages) && messages.length ? messages.join(' ') : 'Hesap oluşturulurken bir hata oluştu.');
         }
     };
 
     return (
-        <div className="ax-auth-screen">
-            <div className="ax-auth-card" style={{ width: 420 }}>
-                <div className="ax-auth-top">
-                    <div className="ax-auth-mark"><span className="crest"></span>AcademiaX</div>
-                    <div className="ax-auth-tag">Yeni öğrenci hesabı oluştur</div>
-                </div>
-                <form className="ax-auth-body" onSubmit={handleSubmit}>
-                    <div className="ax-auth-note">
-                        Buradan oluşturulan hesaplar Öğrenci rolüyle açılır. Öğretim üyesi/yönetici
-                        hesapları yalnızca yönetici tarafından oluşturulabilir.
-                    </div>
-
+        <div>
+            <div className="ax-page-top">
+                <div><h1>Yeni Öğretmen Ekle</h1></div>
+            </div>
+            <div className="ax-card" style={{ maxWidth: 480 }}>
+                <form className="ax-card-body" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
                     <div className="ax-field-row">
                         <div className="ax-field"><label htmlFor="firstName">Ad</label><input id="firstName" type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} required /></div>
                         <div className="ax-field"><label htmlFor="lastName">Soyad</label><input id="lastName" type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} required /></div>
@@ -66,13 +62,12 @@ const Register = () => {
                     {error && <div className="ax-error">{error}</div>}
 
                     <button type="submit" className="ax-btn ax-btn-primary ax-btn-block" disabled={isLoading}>
-                        {isLoading ? 'Kaydediliyor…' : 'Kayıt Ol'}
+                        {isLoading ? 'Oluşturuluyor…' : 'Öğretmen Ekle'}
                     </button>
-                    <div className="ax-auth-foot">Zaten hesabın var mı? <Link to="/">Giriş yap</Link></div>
                 </form>
             </div>
         </div>
     );
 };
 
-export default Register;
+export default AddTeacher;

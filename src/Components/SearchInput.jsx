@@ -1,51 +1,19 @@
 import React, { useState } from 'react';
-import { TextField, IconButton, InputAdornment } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
+import '../styles/theme.css';
 
-const SearchInput = ({ onSearch }) => {
+const SearchInput = ({ onSearch, placeholder = 'Ara…' }) => {
     const [searchText, setSearchText] = useState('');
 
-    const handleInputChange = (e) => {
+    const handleChange = (e) => {
         const value = e.target.value;
         setSearchText(value);
-
-        if (value === '') {
-            onSearch(''); // temizlendiğinde hemen tetikle
-        }
-    };
-
-    const handleSearch = () => {
-        if (onSearch) {
-            onSearch(searchText);
-        }
-    };
-
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter') {
-            handleSearch();
-        }
+        onSearch?.(value);
     };
 
     return (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px' }}>
-            <TextField
-                variant="outlined"
-                size="small"
-                placeholder="Search..."
-                value={searchText}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                sx={{ width: 250, backgroundColor: 'white', borderRadius: 1 }}
-                InputProps={{
-                    endAdornment: (
-                        <InputAdornment position="end">
-                            <IconButton onClick={handleSearch} edge="end">
-                                <SearchIcon />
-                            </IconButton>
-                        </InputAdornment>
-                    ),
-                }}
-            />
+        <div className="ax-search-input">
+            <span aria-hidden="true">🔍</span>
+            <input type="text" placeholder={placeholder} value={searchText} onChange={handleChange} />
         </div>
     );
 };

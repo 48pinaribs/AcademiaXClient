@@ -1,27 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
 import CourseList from "../../Components/CourseList";
-import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
-import AddIcon from '@mui/icons-material/Add';
+import SearchInput from "../../Components/SearchInput";
 import { useNavigate } from "react-router-dom";
+import '../../styles/theme.css';
 
 const AdminCoursePage = () => {
-
     const navigate = useNavigate();
-
-    const handleClick = () => {
-        navigate('/admin/addcourse');
-    };
+    const [searchTerm, setSearchTerm] = useState('');
 
     return (
-        <div style={{ padding: "2rem" }}>
-            <h1>🗂️ All Courses</h1>
-            <Stack direction="row" display="flex" justifyContent="flex-end" mb={4}>
-                <Button variant="contained" onClick={handleClick} startIcon={<AddIcon />}>
-                    Add Course
-                </Button>
-            </Stack>
-            <CourseList />
+        <div>
+            <div className="ax-page-top">
+                <div><h1>Kurslar</h1></div>
+                <button className="ax-btn ax-btn-primary" onClick={() => navigate('/admin/addcourse')}>+ Yeni Kurs</button>
+            </div>
+            <div className="ax-search-bar">
+                <SearchInput onSearch={setSearchTerm} placeholder="Kurs adı veya kodu ara…" />
+            </div>
+            <CourseList searchTerm={searchTerm} />
         </div>
     );
 };

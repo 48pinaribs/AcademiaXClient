@@ -1,55 +1,25 @@
-import React from 'react'
-import TeacherList from '../../Components/TeacherList'
-import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
-import AddIcon from '@mui/icons-material/Add';
-import { useNavigate } from "react-router-dom";
-import { useState } from 'react';
+import React, { useState } from 'react';
+import TeacherList from '../../Components/TeacherList';
 import SearchInput from '../../Components/SearchInput';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-
+import { useNavigate } from "react-router-dom";
+import '../../styles/theme.css';
 
 const AdminTeacherPage = () => {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
 
-    const handleClick = () => {
-        navigate('/register');
-    };
-
-    const handleSearch = (text) => {
-        setSearchTerm(text);
-        console.log('Arama metni:', text);
-    };
-
     return (
-        <Box sx={{ padding: '2rem' }}>
-            <Typography variant="h4" gutterBottom>
-                All Teachers
-            </Typography>
-
-            <Stack
-                direction={{ xs: 'column', sm: 'row' }}
-                spacing={2}
-                justifyContent="space-between"
-                alignItems={{ xs: 'stretch', sm: 'center' }}
-                mb={4}
-            >
-                <SearchInput onSearch={handleSearch} />
-                <Button
-                    variant="contained"
-                    onClick={handleClick}
-                    startIcon={<AddIcon />}
-                    sx={{ height: '40px' }}
-                >
-                    Add Teacher
-                </Button>
-            </Stack>
-
+        <div>
+            <div className="ax-page-top">
+                <div><h1>Öğretmenler</h1></div>
+                <button className="ax-btn ax-btn-primary" onClick={() => navigate('/admin/addteacher')}>+ Öğretmen Ekle</button>
+            </div>
+            <div className="ax-search-bar">
+                <SearchInput onSearch={setSearchTerm} placeholder="Ad veya e-posta ara…" />
+            </div>
             <TeacherList searchTerm={searchTerm} />
-        </Box>
-    )
-}
+        </div>
+    );
+};
 
-export default AdminTeacherPage
+export default AdminTeacherPage;

@@ -1,133 +1,67 @@
-import React from 'react';
-import {
-    Button,
-    Form,
-    Input,
-    InputNumber,
-    Select,
-    Typography,
-    message,
-} from 'antd';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCreateCourseMutation } from '../Api/courseApi';
-
-const { TextArea } = Input;
-const { Title } = Typography;
-
-const formItemLayout = {
-    labelCol: { xs: { span: 24 }, sm: { span: 6 } },
-    wrapperCol: { xs: { span: 24 }, sm: { span: 14 } },
-};
+import { useGetAllTeachersQuery } from '../Api/teacherApi';
+import ToastrNotify from '../Helper/ToastrNotify';
+import '../styles/theme.css';
 
 const AddCourse = () => {
-
-    const [form] = Form.useForm();
+    const navigate = useNavigate();
     const [createCourse, { isLoading }] = useCreateCourseMutation();
+    const { data: teachersRes } = useGetAllTeachersQuery();
+    const teachers = teachersRes?.result || [];
 
-    const onFinish = async (values) => {
+    const [form, setForm] = useState({
+        name: '', code: '', description: '', credits: 3, departmentId: 1, semesterId: 1, teacherId: '',
+    });
+    const [error, setError] = useState('');
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setForm((f) => ({ ...f, [name]: ['credits', 'departmentId', 'semesterId'].includes(name) ? Number(value) : value }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
         try {
-            await createCourse(values).unwrap();
-            message.success('Course created successfully!');
-            form.resetFields();
-        } catch (error) {
-            message.error('Failed to create course.');
-            console.error(error);
+            await createCourse(form).unwrap();
+            ToastrNotify('Ders oluşturuldu.', 'success');
+            navigate('/admin/courses');
+        } catch (err) {
+            const messages = err?.data?.errorMessages;
+            setError(Array.isArray(messages) && messages.length ? messages.join(' ') : 'Ders oluşturulurken bir hata oluştu.');
         }
     };
 
     return (
-        <div style={{ maxWidth: 700, margin: '50px auto' }}>
-            <Title level={3}>➕ Add New Course</Title>
-            <Form
-                {...formItemLayout}
-                form={form}
-                name="add-course-form"
-                onFinish={onFinish}
-                layout="horizontal"
-                initialValues={{}}
-            >
-                <Form.Item
-                    label="Course Name"
-                    name="name"
-                    rules={[{ required: true, message: 'Please enter the course name' }]}
-                >
-                    <Input />
-                </Form.Item>
+        <div>
+            <div className="ax-page-top"><div><h1>Yeni Ders Ekle</h1></div></div>
+            <div className="ax-card" style={{ maxWidth: 560 }}>
+                <form className="ax-card-body" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                    <div className="ax-field"><label htmlFor="name">Ders Adı</label><input id="name" name="name" value={form.name} onChange={handleChange} required /></div>
+                    <div className="ax-field"><label htmlFor="code">Ders Kodu</label><input id="code" name="code" value={form.code} onChange={handleChange} required /></div>
+                    <div className="ax-field"><label htmlFor="description">Açıklama</label><textarea id="description" name="description" rows={3} value={form.description} onChange={handleChange} /></div>
+                    <div className="ax-field-row">
+                        <div className="ax-field"><label htmlFor="credits">Kredi</label><input id="credits" name="credits" type="number" min={1} max={30} value={form.credits} onChange={handleChange} required /></div>
+                        <div className="ax-field"><label htmlFor="semesterId">Dönem No</label><input id="semesterId" name="semesterId" type="number" min={1} value={form.semesterId} onChange={handleChange} required /></div>
+                    </div>
+                    <div className="ax-field"><label htmlFor="departmentId">Bölüm No</label><input id="departmentId" name="departmentId" type="number" min={1} value={form.departmentId} onChange={handleChange} required /></div>
+                    <div className="ax-field">
+                        <label htmlFor="teacherId">Öğretim Üyesi</label>
+                        <select id="teacherId" name="teacherId" value={form.teacherId} onChange={handleChange} required>
+                            <option value="" disabled>Seçiniz…</option>
+                            {teachers.map((t) => <option key={t.id} value={t.id}>{t.fullName}</option>)}
+                        </select>
+                    </div>
 
-                <Form.Item
-                    label="Course Code"
-                    name="code"
-                    rules={[{ required: true, message: 'Please enter the course code' }]}
-                >
-                    <Input />
-                </Form.Item>
+                    {error && <div className="ax-error">{error}</div>}
 
-                <Form.Item
-                    label="Description"
-                    name="description"
-                    rules={[{ required: true, message: 'Please enter a description' }]}
-                >
-                    <TextArea rows={4} />
-                </Form.Item>
-
-                <Form.Item
-                    label="Credits"
-                    name="credits"
-                    rules={[{ required: true, message: 'Please enter credit value' }]}
-                >
-                    <InputNumber min={1} max={30} style={{ width: '100%' }} />
-                </Form.Item>
-
-                <Form.Item
-                    label="Department"
-                    name="departmentId"
-                    rules={[{ required: true, message: 'Please select a department' }]}
-                >
-                    {/* <Select placeholder="Select department">
-                        {departments.map((dept) => (
-                            <Select.Option key={dept.id} value={dept.id}>
-                                {dept.name}
-                            </Select.Option>
-                        ))}
-                    </Select> */}
-                    <InputNumber min={1} max={30} style={{ width: '100%' }} />
-                </Form.Item>
-
-                <Form.Item
-                    label="Semester"
-                    name="semesterId"
-                    rules={[{ required: true, message: 'Please select a semester' }]}
-                >
-                    {/* <Select placeholder="Select semester">
-                        {semesters.map((sem) => (
-                            <Select.Option key={sem.id} value={sem.id}>
-                                {sem.name}
-                            </Select.Option>
-                        ))}
-                    </Select> */}
-                    <InputNumber min={1} max={30} style={{ width: '100%' }} />
-                </Form.Item>
-
-                <Form.Item
-                    label="Teacher Id"
-                    name="teacherId"
-                    rules={[{ required: true, message: 'Please select a teacher' }]}
-                >
-                    {/* <Select placeholder="Select teacher">
-                        {teachers.map((teacher) => (
-                            <Select.Option key={teacher.id} value={teacher.id}>
-                                {teacher.name}
-                            </Select.Option>
-                        ))}
-                    </Select> */}
-                    <Input />
-                </Form.Item>
-
-                <Form.Item wrapperCol={{ offset: 6, span: 14 }}>
-                    <Button type="primary" htmlType="submit" block>
-                        Save Course
-                    </Button>
-                </Form.Item>
-            </Form>
+                    <button type="submit" className="ax-btn ax-btn-primary ax-btn-block" disabled={isLoading}>
+                        {isLoading ? 'Kaydediliyor…' : 'Dersi Kaydet'}
+                    </button>
+                </form>
+            </div>
         </div>
     );
 };

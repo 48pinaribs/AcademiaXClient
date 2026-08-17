@@ -1,129 +1,77 @@
 import React, { useState } from "react";
-import { jwtDecode } from "jwt-decode";
 import {
-    Checkbox,
-    Card,
-    Row,
-    Col,
-    Button,
-    Typography,
-    Spin,
-    message,
-} from "antd";
-import {
-    useGetAllCoursesQuery,
+    useGetAvailableCoursesQuery,
     useEnrollCourseMutation,
 } from "../Api/courseApi";
+import { useAuth } from "../Hooks/useAuth";
+import ToastrNotify from "../Helper/ToastrNotify";
+import { LoadingState, ErrorState, EmptyState } from "./UI/States";
+import "../styles/theme.css";
 
-const { Title } = Typography;
+const SelectCourse = () => {
+    const { isAuthenticated, userId: studentId } = useAuth();
+    const [enrollingId, setEnrollingId] = useState(null);
 
-const CourseSelection = () => {
-    const [selectedCourses, setSelectedCourses] = useState([]);
+    // Not: önceden tüm dersler (useGetAllCoursesQuery) listeleniyordu, öğrenci zaten
+    // kayıtlı olduğu dersi de burada görüyordu. "available" uç noktası kayıtlı olunmayan
+    // dersleri döndürüyor — daha doğru bir Ders Seç davranışı.
+    const { data, isLoading, error } = useGetAvailableCoursesQuery(studentId, { skip: !studentId });
+    const [enrollCourse] = useEnrollCourseMutation();
 
-    // Dersleri API'den al
-    const {
-        data: coursesData,
-        isLoading,
-        isError,
-    } = useGetAllCoursesQuery();
+    const courses = data?.result || [];
 
-    // Kayıt mutation
-    const [enrollCourse, { isLoading: isSubmitting }] =
-        useEnrollCourseMutation();
-
-    // Checkbox değişimi
-    const handleCourseChange = (checkedValues) => {
-        setSelectedCourses(checkedValues);
-    };
-
-    // Kayıt gönderimi
-    const handleSubmit = async () => {
-        const token = localStorage.getItem("token");
-
-        if (!token) {
-            message.error("Authentication token not found.");
+    const handleEnroll = async (courseId) => {
+        if (!isAuthenticated || !studentId) {
+            ToastrNotify('Oturum bulunamadı, lütfen tekrar giriş yapın.', 'error');
             return;
         }
-
-        let studentId;
+        setEnrollingId(courseId);
         try {
-            const decoded = jwtDecode(token);
-            console.log("Decoded token:", decoded);
-            studentId = decoded?.nameid;
-            console.log("Student ID:", studentId);
-
-            if (!studentId) throw new Error("Student ID not found in token.");
+            await enrollCourse({ studentId, courseId }).unwrap();
+            ToastrNotify('Derse kayıt oldunuz.', 'success');
         } catch (err) {
-            console.error("Token decoding error:", err);
-            message.error("Invalid token.");
-            return;
-        }
-
-        try {
-            const selectedCourseList = coursesData?.result?.filter((course) =>
-                selectedCourses.includes(course.code)
-            );
-            console.log("Selected courses:", selectedCourseList);
-
-            for (const course of selectedCourseList) {
-                const payload = {
-                    studentId,
-                    courseId: course.courseId,
-                };
-                await enrollCourse(payload).unwrap();
-            }
-
-            message.success("Successfully enrolled in selected courses.");
-            setSelectedCourses([]);
-        } catch (error) {
-            console.error("Enrollment error:", error);
-            message.error("Enrollment failed. Please try again.");
+            ToastrNotify(err?.data?.errorMessages?.[0] || 'Kayıt sırasında bir hata oluştu.', 'error');
+        } finally {
+            setEnrollingId(null);
         }
     };
-
-    // Yüklenme ve hata durumu
-    if (isLoading) {
-        return <Spin size="large" style={{ display: "block", margin: "100px auto" }} />;
-    }
-
-    if (isError || !Array.isArray(coursesData?.result)) {
-        return <p style={{ textAlign: "center", marginTop: "100px" }}>Failed to load courses.</p>;
-    }
 
     return (
-        <Card
-            title={<Title level={4}>Course Selection</Title>}
-            style={{ maxWidth: 700, margin: "50px auto", borderRadius: 12 }}
-        >
-            <Checkbox.Group
-                style={{ width: "100%" }}
-                onChange={handleCourseChange}
-                value={selectedCourses}
-            >
-                <Row gutter={[16, 16]}>
-                    {coursesData.result.map((course) => (
-                        <Col span={24} md={12} key={course.id}>
-                            <Card bordered hoverable>
-                                <Checkbox value={course.code}>
-                                    <strong>{course.code}</strong> – {course.name} ({course.credit} credits)
-                                </Checkbox>
-                            </Card>
-                        </Col>
-                    ))}
-                </Row>
-            </Checkbox.Group>
+        <div>
+            <div className="ax-page-top">
+                <div><h1>Ders Seç</h1><div className="meta">Alınabilecek dersler</div></div>
+            </div>
 
-            <Button
-                type="primary"
-                onClick={handleSubmit}
-                disabled={selectedCourses.length === 0 || isSubmitting}
-                loading={isSubmitting}
-                style={{ marginTop: 24, width: "100%" }}
-            >
-                Enroll in Selected Courses
-            </Button>
-        </Card>
+            {isLoading && <LoadingState />}
+            {!isLoading && error && <ErrorState text="Dersler yüklenemedi." />}
+
+            {!isLoading && !error && (
+                courses.length === 0 ? (
+                    <div className="ax-card"><EmptyState icon="📚" title="Alabileceğin yeni ders yok" subtitle="Zaten tüm derslere kayıtlısın ya da henüz ders açılmamış." /></div>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                        {courses.map((course) => (
+                            <div key={course.courseId} className="ax-card" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', padding: 'var(--space-4)' }}>
+                                <div>
+                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--purple-strong)', fontWeight: 700 }}>{course.code}</div>
+                                    <div style={{ fontWeight: 600 }}>{course.name}</div>
+                                    <div style={{ fontSize: 12, color: 'var(--ink-faint)' }}>{course.credits} kredi · {course.totalStudents} kayıtlı öğrenci</div>
+                                </div>
+                                <div style={{ flex: 1 }} />
+                                <button
+                                    className="ax-btn ax-btn-primary"
+                                    disabled={enrollingId === course.courseId}
+                                    onClick={() => handleEnroll(course.courseId)}
+                                >
+                                    {enrollingId === course.courseId ? 'Kaydediliyor…' : 'Kayıt Ol'}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )
+            )}
+        </div>
     );
 };
 
-export default CourseSelection;
+export default SelectCourse;

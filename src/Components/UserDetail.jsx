@@ -1,85 +1,94 @@
-import { Card, Descriptions, Button, Image, Spin } from 'antd';
-import '../Components/Styles/ProfilePage.css';
 import { useParams } from 'react-router-dom';
-import { useGetUserTypeQuery } from '../Api/accountApi'; // Kullanıcının tipi için
+import { useGetUserTypeQuery } from '../Api/accountApi';
 import { useGetTeacherProfileQuery } from '../Api/teacherApi';
 import { useGetStudentProfileQuery } from '../Api/studentApi';
+import { LoadingState, ErrorState, EmptyState } from './UI/States';
+import '../styles/theme.css';
+
+const initials = (fullName) => {
+    const parts = (fullName || '').trim().split(/\s+/);
+    return ((parts[0]?.[0] || '?') + (parts[1]?.[0] || '')).toUpperCase();
+};
+
+const Field = ({ label, value }) => (
+    <div>
+        <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>{label}</div>
+        <div style={{ fontSize: 'var(--text-base)', marginTop: 4 }}>{value || '—'}</div>
+    </div>
+);
 
 const UserDetail = () => {
     const { userId } = useParams();
 
-    // 1. userType sorgusu (örnek endpoint: /api/user/type/{id})
-    const { data: userTypeData, isLoading: isLoadingType } = useGetUserTypeQuery(userId);
+    const { data: userTypeData, isLoading: isLoadingType } = useGetUserTypeQuery(userId, { skip: !userId });
     const userType = userTypeData?.result;
 
-    // 2. Profil sorguları
     const {
         data: teacherData,
         isLoading: isTeacherLoading,
-        error: teacherError
+        error: teacherError,
     } = useGetTeacherProfileQuery(userId, { skip: userType !== 'Teacher' });
 
     const {
         data: studentData,
         isLoading: isStudentLoading,
-        error: studentError
+        error: studentError,
     } = useGetStudentProfileQuery(userId, { skip: userType !== 'Student' });
 
     const profile = userType === 'Teacher' ? teacherData?.result : studentData?.result;
 
-    // 3. Durumlar
     if (isLoadingType || isTeacherLoading || isStudentLoading) {
-        return <Spin tip="Profil yükleniyor..." />;
+        return <LoadingState text="Profil yükleniyor…" />;
     }
 
     if (!profile) {
-        return <p style={{ color: "red" }}>Kullanıcı profili alınamadı.</p>;
+        const notFound = userType && !teacherError && !studentError;
+        return notFound
+            ? <EmptyState title="Kullanıcı profili bulunamadı." />
+            : <ErrorState text="Kullanıcı profili alınamadı." />;
     }
 
+    const fullName = profile.fullName;
+    const phone = profile.phoneNumber || profile.phone;
+
     return (
-        <div className="profile-container">
-            <Card>
-                <div className="profile-content">
-                    <Image
-                        src={profile.image || undefined}
-                        alt="Profil Fotoğrafı"
-                        width={150}
-                        height={180}
-                        className='profile-photo'
-                        style={{ objectFit: 'cover', borderRadius: 8, marginTop: 80 }}
-                        preview={false}
-                    />
-                    <div className="profile-info">
-                        <Descriptions column={1} size="small" bordered>
-                            <Descriptions.Item label="Name">{profile.fullName}</Descriptions.Item>
-                            <Descriptions.Item label="Email">{profile.email}</Descriptions.Item>
+        <div>
+            <div className="ax-page-top"><div><h1>{fullName}</h1><div className="meta">{userType === 'Teacher' ? 'Öğretim Üyesi' : 'Öğrenci'}</div></div></div>
 
-                            {userType === 'Teacher' && (
-                                <>
-                                    <Descriptions.Item label="Branch">{profile.branch}</Descriptions.Item>
-                                    <Descriptions.Item label="Title">{profile.title}</Descriptions.Item>
-                                    <Descriptions.Item label="Biography">{profile.biography}</Descriptions.Item>
-                                    <Descriptions.Item label="Office">{profile.office}</Descriptions.Item>
-                                    <Descriptions.Item label="Total Students">{profile.totalStudents}</Descriptions.Item>
-                                </>
-                            )}
-
-                            {userType === 'Student' && (
-                                <>
-                                    <Descriptions.Item label="Class">{profile.className}</Descriptions.Item>
-                                    <Descriptions.Item label="Advisor">{profile.advisorTeacher}</Descriptions.Item>
-                                    <Descriptions.Item label="GPA">{profile.gpa}</Descriptions.Item>
-                                    <Descriptions.Item label="Biography">{profile.biography}</Descriptions.Item>
-                                </>
-                            )}
-                        </Descriptions>
-
-                        <div style={{ marginTop: '1rem', textAlign: 'right' }}>
-                            <Button type="primary">Profili Düzenle</Button>
-                        </div>
+            <div className="ax-card">
+                <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'center', padding: 'var(--space-5)', borderBottom: '1px solid var(--line-soft)' }}>
+                    <div className="ax-avatar-lg">{initials(fullName)}</div>
+                    <div>
+                        <h2 style={{ fontSize: 'var(--text-xl)' }}>{fullName}</h2>
+                        <div style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-faint)', marginTop: 3 }}>{profile.email}</div>
                     </div>
                 </div>
-            </Card>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)', padding: 'var(--space-5)' }}>
+                    <Field label="E-posta" value={profile.email} />
+                    <Field label="Telefon" value={phone} />
+
+                    {userType === 'Teacher' && (
+                        <>
+                            <Field label="Bölüm" value={profile.branch} />
+                            <Field label="Unvan" value={profile.title} />
+                            <Field label="Oda" value={profile.office} />
+                            <Field label="Verdiği Ders Sayısı" value={profile.coursesGivenCount} />
+                            <Field label="Toplam Öğrenci" value={profile.totalStudents} />
+                            <div style={{ gridColumn: '1 / -1' }}><Field label="Biyografi" value={profile.biography} /></div>
+                        </>
+                    )}
+
+                    {userType === 'Student' && (
+                        <>
+                            <Field label="Bölüm" value={profile.department} />
+                            <Field label="Danışman" value={profile.advisorName} />
+                            <Field label="Genel Not Ortalaması" value={profile.gpa != null ? profile.gpa.toFixed(2) : null} />
+                            <div style={{ gridColumn: '1 / -1' }}><Field label="Biyografi" value={profile.biography} /></div>
+                        </>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };

@@ -1,28 +1,42 @@
 import React from 'react';
 import { useGetStudentsByCourseQuery } from '../Api/courseApi';
-import { Spin, List, Alert } from 'antd';
+import { LoadingState, ErrorState, EmptyState } from './UI/States';
+import '../styles/theme.css';
 
+const initials = (firstName, lastName) => {
+    const a = (firstName || '?')[0] || '?';
+    const b = (lastName || '')[0] || '';
+    return (a + b).toUpperCase();
+};
+
+// courseId prop ile kullanılan, tek bir dersin kayıtlı öğrenci listesini gösteren
+// gömülebilir bileşen (bkz. CourseDetail.jsx).
 const CourseStudents = ({ courseId }) => {
-    const { data: students, isLoading, error } = useGetStudentsByCourseQuery(courseId);
-    console.log(students);
+    const { data: students, isLoading, error } = useGetStudentsByCourseQuery(courseId, { skip: !courseId });
 
-    if (isLoading) return <Spin tip="Öğrenciler yükleniyor..." />;
-
-    if (error) return <Alert message="Hata" description="Öğrenciler getirilemedi." type="error" />;
-
-    if (!students?.length) return <Alert message="Bu kursa kayıtlı öğrenci yok." type="info" />;
+    if (isLoading) return <LoadingState text="Öğrenciler yükleniyor…" />;
+    if (error) return <ErrorState text="Öğrenciler getirilemedi." />;
+    if (!students?.length) return <EmptyState icon="🎓" title="Bu derse kayıtlı öğrenci yok" />;
 
     return (
-        <List
-            header={<strong>Kayıtlı Öğrenciler</strong>}
-            bordered
-            dataSource={students}
-            renderItem={(student) => (
-                <List.Item>
-                    {student.firstName} {student.lastName} — {student.email}
-                </List.Item>
-            )}
-        />
+        <div className="ax-table-wrap">
+            <table className="ax-table">
+                <thead><tr><th>Öğrenci</th><th>E-posta</th></tr></thead>
+                <tbody>
+                    {students.map((s) => (
+                        <tr key={s.id}>
+                            <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <div className="ax-avatar">{initials(s.firstName, s.lastName)}</div>
+                                    {s.firstName} {s.lastName}
+                                </div>
+                            </td>
+                            <td>{s.email}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
     );
 };
 

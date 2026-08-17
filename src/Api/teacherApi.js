@@ -1,10 +1,9 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { createAuthorizedBaseQuery } from "./apiConfig";
 
 const teacherApi = createApi({
     reducerPath: "teacherApi",
-    baseQuery: fetchBaseQuery({
-        baseUrl: "https://localhost:7111/api/teacher/",
-    }),
+    baseQuery: createAuthorizedBaseQuery("teacher"),
     tagTypes: ["Teacher"],
     endpoints: (builder) => ({
         getAllTeachers: builder.query({
@@ -12,7 +11,8 @@ const teacherApi = createApi({
             providesTags: ["Teacher"],
         }),
         getTeacherById: builder.query({
-            query: (teacherId) => `get/${teacherId}`, // Teacher ID'sine göre teacher bilgilerini getirir
+            // Not: backend route'u /api/teacher/{teacherId} — "get/" öneki yoktu, eklenince 404 alıyordu.
+            query: (teacherId) => `${teacherId}`,
             providesTags: ["Teacher"],
         }),
         getTeacherProfile: builder.query({
