@@ -13,6 +13,7 @@ export function getNavGroups(role) {
                         { label: 'Kurslar', path: '/admin/courses' },
                         { label: 'Öğretmenler', path: '/admin/teachers' },
                         { label: 'Öğrenciler', path: '/admin/students' },
+                        { label: 'Kampüs Ring Yönetimi', path: '/admin/transport' },
                         { label: 'Duyurular', path: '/announcements' },
                     ],
                 },

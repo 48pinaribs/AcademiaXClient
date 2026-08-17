@@ -29,6 +29,7 @@ import StudentDashboard from './Pages/Student/StudentDashboard';
 import StudentGrades from './Pages/Student/StudentGrades';
 import StudentAttendance from './Pages/Student/StudentAttendance';
 import Announcements from './Pages/Announcements';
+import AdminTransportPage from './Pages/Admin/AdminTransportPage';
 
 // Ant Design ve MUI, AcademiaX'in mor tasarım sistemine göre yeniden temalandırılıyor
 // (bkz. tasarım onayı) — her sayfayı tek tek yeniden yazmak yerine, mevcut antd/MUI
@@ -81,6 +82,7 @@ function App() {
             <Route path="/admin/teachers" element={<ProtectedRoute allowedRoles={["Administrator"]}><AdminTeacherPage /></ProtectedRoute>} />
             <Route path="/admin/students" element={<ProtectedRoute allowedRoles={["Administrator"]}><AdminStudentPage /></ProtectedRoute>} />
             <Route path='/admin/courses' element={<ProtectedRoute allowedRoles={["Administrator"]}><AdminCoursePage /></ProtectedRoute>} />
+            <Route path='/admin/transport' element={<ProtectedRoute allowedRoles={["Administrator"]}><AdminTransportPage /></ProtectedRoute>} />
 
             {/* Teacher / Administrator */}
             <Route path='/teacher/dashboard' element={<ProtectedRoute allowedRoles={["Teacher"]}><TeacherDashboard /></ProtectedRoute>} />
