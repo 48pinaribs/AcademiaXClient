@@ -9,6 +9,7 @@ import studentApi from "../Api/studentApi";
 import teacherApi from "../Api/teacherApi";
 import accountApi from "../Api/accountApi";
 import gtfsApi from "../Api/gtfsApi";
+import announcementApi from "../Api/announcementApi";
 
 const store = configureStore({
     reducer: {
@@ -21,6 +22,7 @@ const store = configureStore({
         [teacherApi.reducerPath]: teacherApi.reducer,
         [accountApi.reducerPath]: accountApi.reducer,
         [gtfsApi.reducerPath]: gtfsApi.reducer,
+        [announcementApi.reducerPath]: announcementApi.reducer,
     },
 
     middleware: (getDefaultMiddleware) =>
@@ -29,7 +31,8 @@ const store = configureStore({
             studentApi.middleware,
             teacherApi.middleware,
             accountApi.middleware,
-            gtfsApi.middleware
+            gtfsApi.middleware,
+            announcementApi.middleware
         ),
 });
 

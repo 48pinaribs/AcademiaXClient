@@ -4,7 +4,7 @@ import { createAuthorizedBaseQuery } from "./apiConfig";
 const teacherApi = createApi({
     reducerPath: "teacherApi",
     baseQuery: createAuthorizedBaseQuery("teacher"),
-    tagTypes: ["Teacher"],
+    tagTypes: ["Teacher", "Grades", "Attendance"],
     endpoints: (builder) => ({
         getAllTeachers: builder.query({
             query: () => `all`, // Tüm teacher'leri getirir
@@ -45,6 +45,26 @@ const teacherApi = createApi({
             query: (teacherId) => `messages/${teacherId}`,
             providesTags: ["Teacher"],
         }),
+
+        // --- Not girişi ---
+        getCourseGrades: builder.query({
+            query: (courseId) => `grades/${courseId}`,
+            providesTags: ["Grades"],
+        }),
+        upsertGrade: builder.mutation({
+            query: (data) => ({ url: "grades", method: "PUT", body: data }),
+            invalidatesTags: ["Grades"],
+        }),
+
+        // --- Yoklama alma ---
+        getCourseAttendance: builder.query({
+            query: ({ courseId, date }) => `attendance/${courseId}?date=${date}`,
+            providesTags: ["Attendance"],
+        }),
+        markAttendance: builder.mutation({
+            query: (data) => ({ url: "attendance", method: "POST", body: data }),
+            invalidatesTags: ["Attendance"],
+        }),
     }),
 });
 
@@ -56,6 +76,10 @@ export const {
     useUpdateTeacherProfileMutation,
     useAssignStudentToCourseMutation,
     useGetTeacherMessagesQuery,
+    useGetCourseGradesQuery,
+    useUpsertGradeMutation,
+    useGetCourseAttendanceQuery,
+    useMarkAttendanceMutation,
 } = teacherApi;
 
 export default teacherApi;
