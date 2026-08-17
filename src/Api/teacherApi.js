@@ -40,6 +40,11 @@ const teacherApi = createApi({
             }),
             invalidatesTags: ["Teacher"],
         }),
+
+        getTeacherMessages: builder.query({
+            query: (teacherId) => `messages/${teacherId}`,
+            providesTags: ["Teacher"],
+        }),
     }),
 });
 
@@ -50,6 +55,7 @@ export const {
     useGetTeacherCoursesQuery,
     useUpdateTeacherProfileMutation,
     useAssignStudentToCourseMutation,
+    useGetTeacherMessagesQuery,
 } = teacherApi;
 
 export default teacherApi;

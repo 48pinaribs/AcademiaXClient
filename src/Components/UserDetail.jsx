@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useGetUserTypeQuery } from '../Api/accountApi';
-import { useGetTeacherProfileQuery } from '../Api/teacherApi';
-import { useGetStudentProfileQuery } from '../Api/studentApi';
+import { useGetTeacherProfileQuery, useGetAllTeachersQuery } from '../Api/teacherApi';
+import { useGetStudentProfileQuery, useAssignAdvisorMutation } from '../Api/studentApi';
+import { useAuth } from '../Hooks/useAuth';
+import ToastrNotify from '../Helper/ToastrNotify';
 import { LoadingState, ErrorState, EmptyState } from './UI/States';
 import '../styles/theme.css';
 
@@ -17,8 +20,46 @@ const Field = ({ label, value }) => (
     </div>
 );
 
+// Admin'in bir öğrenciye danışman öğretim üyesi atayabildiği kontrol.
+const AdvisorAssignment = ({ studentId, currentAdvisorName }) => {
+    const { data: teachersData, isLoading } = useGetAllTeachersQuery();
+    const [assignAdvisor, { isLoading: isAssigning }] = useAssignAdvisorMutation();
+    const [selected, setSelected] = useState('');
+
+    const teachers = teachersData?.result || [];
+
+    const handleAssign = async () => {
+        if (!selected) return;
+        try {
+            await assignAdvisor({ studentId, advisorId: selected }).unwrap();
+            ToastrNotify('Danışman ataması güncellendi.', 'success');
+        } catch (err) {
+            const msg = err?.data?.errorMessages?.[0] || 'Danışman atanırken bir hata oluştu.';
+            ToastrNotify(msg, 'error');
+        }
+    };
+
+    return (
+        <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'flex-end', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+            <div className="ax-field" style={{ flex: 1, minWidth: 220 }}>
+                <label htmlFor="advisorSelect">Danışman Ata {currentAdvisorName ? `(mevcut: ${currentAdvisorName})` : ''}</label>
+                <select id="advisorSelect" value={selected} onChange={(e) => setSelected(e.target.value)} disabled={isLoading}>
+                    <option value="">Öğretim üyesi seçin…</option>
+                    {teachers.map((t) => (
+                        <option key={t.id} value={t.id}>{t.fullName}</option>
+                    ))}
+                </select>
+            </div>
+            <button className="ax-btn ax-btn-primary" onClick={handleAssign} disabled={!selected || isAssigning}>
+                {isAssigning ? 'Atanıyor…' : 'Ata'}
+            </button>
+        </div>
+    );
+};
+
 const UserDetail = () => {
     const { userId } = useParams();
+    const { role: viewerRole } = useAuth();
 
     const { data: userTypeData, isLoading: isLoadingType } = useGetUserTypeQuery(userId, { skip: !userId });
     const userType = userTypeData?.result;
@@ -85,6 +126,9 @@ const UserDetail = () => {
                             <Field label="Danışman" value={profile.advisorName} />
                             <Field label="Genel Not Ortalaması" value={profile.gpa != null ? profile.gpa.toFixed(2) : null} />
                             <div style={{ gridColumn: '1 / -1' }}><Field label="Biyografi" value={profile.biography} /></div>
+                            {viewerRole === 'Administrator' && (
+                                <AdvisorAssignment studentId={userId} currentAdvisorName={profile.advisorName} />
+                            )}
                         </>
                     )}
                 </div>

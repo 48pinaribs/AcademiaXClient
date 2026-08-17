@@ -17,6 +17,7 @@ const studentApi = createApi({
         }),
         getStudentProfile: builder.query({
             query: (userId) => `profile/${userId}`,
+            providesTags: ["Student"],
         }),
 
         getStudentCourses: builder.query({
@@ -56,6 +57,16 @@ const studentApi = createApi({
                 body: messageData,
             }),
         }),
+
+        // Admin'in bir öğrenciye danışman (Teacher) atamasını/kaldırmasını sağlar.
+        assignAdvisor: builder.mutation({
+            query: (data) => ({
+                url: "advisor",
+                method: "PUT",
+                body: data,
+            }),
+            invalidatesTags: ["Student"],
+        }),
     }),
 });
 
@@ -69,6 +80,7 @@ export const {
     useDropStudentCourseMutation,
     useGetStudentAttendanceQuery,
     useSendStudentMessageMutation,
+    useAssignAdvisorMutation,
 } = studentApi;
 
 export default studentApi;
