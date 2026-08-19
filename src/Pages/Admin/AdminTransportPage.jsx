@@ -31,9 +31,12 @@ const AdminTransportPage = () => {
     const { data: tripsData, isLoading: tripsLoading } = useGetTripsQuery();
     const { data: stopTimesData, isLoading: stopTimesLoading } = useGetAllStopTimesQuery();
 
-    const stops = stopsData?.result || [];
-    const trips = tripsData?.result || [];
-    const stopTimes = stopTimesData?.result || [];
+    // useMemo ile sarmalanmazsa data?.result boşken (henüz yüklenmedi / sonuç boş)
+    // her render'da yeni bir [] referansı üretilir, bu da onları dependency olarak
+    // kullanan useEffect/useMemo'ların sürekli yeniden tetiklenmesine yol açar.
+    const stops = useMemo(() => stopsData?.result || [], [stopsData]);
+    const trips = useMemo(() => tripsData?.result || [], [tripsData]);
+    const stopTimes = useMemo(() => stopTimesData?.result || [], [stopTimesData]);
 
     const [upsertStop, { isLoading: isSavingStop }] = useUpsertStopMutation();
     const [deleteStop] = useDeleteStopMutation();
