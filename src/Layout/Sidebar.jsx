@@ -34,7 +34,7 @@ const Sidebar = () => {
         <>
             <div className="ax-mobile-topbar">
                 <NavLink to="/profilepage" className="ax-sidebar-brand" onClick={closeMobile}>
-                    <span className="crest"></span>AcademiaX
+                    AcademiaX
                 </NavLink>
                 <button className="ax-menu-toggle" aria-label="Menüyü aç" onClick={() => setMobileOpen(true)}>☰</button>
             </div>
@@ -45,7 +45,7 @@ const Sidebar = () => {
                 <button className="ax-sidebar-close" aria-label="Menüyü kapat" onClick={closeMobile}>✕</button>
 
                 <NavLink to="/profilepage" className="ax-sidebar-brand" onClick={closeMobile}>
-                    <span className="crest"></span>AcademiaX
+                    AcademiaX
                 </NavLink>
 
                 {groups.map((group) => (

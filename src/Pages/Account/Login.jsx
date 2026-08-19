@@ -62,7 +62,7 @@ const Login = () => {
         <div className="ax-auth-screen">
             <div className="ax-auth-card">
                 <div className="ax-auth-top">
-                    <div className="ax-auth-mark"><span className="crest"></span>AcademiaX</div>
+                    <div className="ax-auth-mark">AcademiaX</div>
                     <div className="ax-auth-tag">Üniversite Bilgi Sistemi</div>
                 </div>
                 <form className="ax-auth-body" onSubmit={handleLogin}>

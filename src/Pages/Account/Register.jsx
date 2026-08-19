@@ -43,7 +43,7 @@ const Register = () => {
         <div className="ax-auth-screen">
             <div className="ax-auth-card" style={{ width: 420 }}>
                 <div className="ax-auth-top">
-                    <div className="ax-auth-mark"><span className="crest"></span>AcademiaX</div>
+                    <div className="ax-auth-mark">AcademiaX</div>
                     <div className="ax-auth-tag">Yeni öğrenci hesabı oluştur</div>
                 </div>
                 <form className="ax-auth-body" onSubmit={handleSubmit}>
